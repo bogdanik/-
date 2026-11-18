@@ -893,16 +893,19 @@
       requestAnimationFrame(renderCinema);
     }
 
-    function launchShow() {
+function launchShow() {
       if (launchOverlay.style.display === 'none') return;
       launchOverlay.style.opacity = '0';
       launchOverlay.style.filter = 'blur(24px)';
       setTimeout(() => { launchOverlay.style.display = 'none'; }, 650);
       dustSpawned = false;
-      // Stop ambient welcome loop because master-audio now has Stage Spotlight mixed in at 30% volume!
-      bgMusic.pause();
+
+      bgMusic.muted = false;
+      bgMusic.volume = 0.30;
+      bgMusic.play().catch(() => {});
+
+      audio.muted = false;
       audio.volume = 1.0;
-      audio.currentTime = 0;
       audio.play().catch(() => {});
     }
 
