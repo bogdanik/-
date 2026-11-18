@@ -1,0 +1,968 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Богдан Богданов — lifeevents_agency</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ease-apple: cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    * {
+      box-sizing: border-box;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #030408;
+      color: #ffffff;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', sans-serif;
+    }
+
+    /* High-Contrast Apple Frosted Glass (Dark core so white text is 100% crisp) */
+    .apple-glass {
+      background: linear-gradient(145deg, rgba(22, 25, 38, 0.82) 0%, rgba(10, 12, 20, 0.88) 100%);
+      backdrop-filter: blur(48px) saturate(190%);
+      -webkit-backdrop-filter: blur(48px) saturate(190%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      box-shadow:
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.38),
+        0 32px 90px rgba(0, 0, 0, 0.85);
+    }
+
+    /* Final Portal Overlay */
+    #final-portal {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.92);
+      filter: blur(18px);
+      transition:
+        opacity 0.65s var(--ease-apple),
+        transform 0.75s var(--ease-apple),
+        filter 0.65s var(--ease-apple);
+    }
+    #final-portal.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: scale(1);
+      filter: blur(0px);
+    }
+
+    #progress-line {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      height: 2.5px;
+      background: linear-gradient(90deg, #38bdf8, #f59e0b, #ec4899);
+      width: 0%;
+      z-index: 40;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Track 1: Voice + Bass Foley (100% volume) -->
+  <audio id="master-audio" preload="auto" src="./voice_master.mp3"></audio>
+
+  <!-- Track 2: Background Music "Stage Spotlight" (30% volume, simultaneous) -->
+  <audio id="bg-music" preload="auto" loop src="./bg_music.mp3"></audio>
+
+  <!-- 100vw x 100vh Apple Motion-Graphics Canvas -->
+  <canvas id="motion-canvas" class="fixed inset-0 w-screen h-screen z-10"></canvas>
+
+  <!-- ========================================================= -->
+  <!-- WELCOME SCREEN (Music plays on background, Tap to Start)   -->
+  <!-- ========================================================= -->
+  <div id="launch-overlay" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-[#030408]/80 backdrop-blur-xl transition-all duration-700 cursor-pointer">
+    <div class="apple-glass rounded-[40px] max-w-lg w-full p-8 sm:p-12 flex flex-col items-center text-center">
+      <div class="text-xs font-semibold tracking-[0.2em] uppercase text-white/50 mb-4">
+        lifeevents_agency
+      </div>
+      <h1 class="text-4xl sm:text-6xl font-bold text-white tracking-tight mb-3" style="letter-spacing: -0.04em;">
+        Ольга Бортникова
+      </h1>
+      <p class="text-sm sm:text-base text-white/65 leading-relaxed mb-9">
+        Персональное моушн-резюме. Включите звук.
+      </p>
+
+      <button id="btn-launch-play" type="button" class="group w-full py-4 px-8 rounded-full bg-white text-black font-semibold text-base sm:text-lg tracking-tight shadow-[0_0_40px_rgba(255,255,255,0.25)] transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-3 cursor-pointer">
+        <span class="w-7 h-7 rounded-full bg-black text-white flex items-center justify-center text-xs pl-0.5 transition-transform group-hover:scale-110">▶</span>
+        <span>Коснитесь, чтобы начать</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ========================================================= -->
+  <!-- FINAL INTERACTIVE PORTAL (Unfolds at 60.4s)               -->
+  <!-- ========================================================= -->
+  <div id="final-portal">
+    <div class="apple-glass rounded-[40px] max-w-xl w-full p-8 sm:p-12 text-center">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-500/15 border border-emerald-400/40 text-emerald-300 text-xs font-semibold tracking-widest uppercase mb-4">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span>Готов включаться · На связи</span>
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-bold text-white tracking-tight mb-2" style="letter-spacing: -0.04em;">
+        Богдан Богданов
+      </h2>
+      <p class="text-sm sm:text-base text-white/65 mb-8">
+        Event Manager для <span class="text-white font-semibold">lifeevents_agency</span> · 15 лет опыта · Сценарии · AI
+      </p>
+
+      <div class="flex flex-col sm:flex-row items-center justify-center gap-3.5">
+        <a href="https://t.me/bogdan_act" target="_blank" rel="noopener noreferrer" class="w-full sm:flex-1 py-4 px-7 rounded-full bg-white text-black font-semibold text-sm sm:text-base tracking-tight transition hover:scale-[1.02] active:scale-[0.98] text-center">
+          Telegram · @bogdan_act
+        </a>
+        <button id="btn-copy-tg" type="button" class="w-full sm:w-auto py-4 px-6 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-medium text-sm transition cursor-pointer">
+          Скопировать ник
+        </button>
+        <button id="btn-replay-end" type="button" class="w-full sm:w-auto py-4 px-5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold text-sm transition cursor-pointer" title="Повторить">
+          ↻
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast-msg" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 apple-glass px-5 py-2.5 rounded-full text-xs font-semibold text-white opacity-0 pointer-events-none transition-opacity duration-300">
+    Скопировано: @bogdan_act
+  </div>
+
+  <div id="progress-line"></div>
+
+  <script>
+    const VOICE_ENV = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.012, 0.011, 0.003, 0.003, 0.013, 0.003, 0.002, 0.004, 0.004, 0.003, 0.005, 0.006, 0.022, 0.022, 0.01, 0.007, 0.015, 0.005, 0.004, 0.003, 0.006, 0.013, 0.003, 0.002, 0.002, 0.002, 0.001, 0.008, 0.004, 0.008, 0.016, 0.004, 0.002, 0.004, 0.003, 0.004, 0.002, 0.001, 0.001, 0.001, 0.001, 0.007, 0.009, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.0, 0.001, 0.087, 0.389, 0.516, 0.879, 1.0, 1.0, 1.0, 0.826, 0.777, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.707, 0.613, 0.568, 0.297, 0.15, 0.08, 0.083, 0.054, 0.057, 0.039, 0.046, 0.046, 0.051, 0.047, 0.039, 0.038, 0.023, 0.023, 0.031, 0.024, 0.024, 0.024, 0.022, 0.018, 0.02, 0.014, 0.012, 0.011, 0.013, 0.013, 0.01, 0.009, 0.006, 0.01, 0.007, 0.008, 0.007, 0.004, 0.006, 0.006, 0.005, 0.003, 0.005, 0.005, 0.005, 0.002, 0.003, 0.003, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.01, 0.009, 0.003, 0.014, 0.012, 0.003, 0.003, 0.002, 0.005, 0.018, 0.003, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.123, 0.688, 0.903, 0.592, 0.858, 0.642, 0.312, 0.354, 0.169, 1.0, 1.0, 0.497, 0.197, 0.213, 0.449, 0.738, 0.795, 0.626, 0.719, 0.765, 0.932, 1.0, 0.963, 1.0, 0.685, 0.34, 0.155, 0.327, 0.777, 0.985, 0.813, 0.775, 0.873, 0.949, 0.942, 0.88, 0.796, 0.697, 0.676, 0.7, 0.674, 0.626, 0.761, 0.851, 1.0, 1.0, 1.0, 0.719, 0.489, 0.404, 0.45, 1.0, 1.0, 1.0, 0.898, 0.708, 0.48, 0.47, 0.436, 0.343, 0.191, 0.127, 0.095, 0.055, 0.057, 0.04, 0.035, 0.034, 0.026, 0.023, 0.021, 0.02, 0.016, 0.02, 0.019, 0.017, 0.011, 0.013, 0.015, 0.014, 0.013, 0.01, 0.038, 0.09, 0.261, 0.835, 1.0, 1.0, 1.0, 1.0, 0.957, 0.909, 0.704, 1.0, 1.0, 0.979, 1.0, 0.964, 0.417, 0.159, 0.079, 0.122, 0.615, 1.0, 1.0, 0.491, 0.375, 0.591, 0.557, 0.176, 0.083, 0.699, 0.815, 0.895, 0.939, 0.803, 0.74, 0.678, 0.573, 0.353, 0.191, 0.072, 0.046, 0.032, 0.032, 0.026, 0.028, 0.04, 0.033, 0.02, 0.018, 0.018, 0.018, 0.016, 0.018, 0.013, 0.013, 0.009, 0.011, 0.009, 0.013, 0.019, 0.012, 0.007, 0.004, 0.007, 0.007, 0.114, 0.29, 0.905, 1.0, 1.0, 1.0, 1.0, 1.0, 0.386, 0.158, 0.413, 0.204, 0.775, 0.903, 0.943, 0.699, 0.327, 0.284, 0.281, 0.336, 0.239, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.888, 0.762, 0.402, 0.237, 0.742, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.998, 1.0, 1.0, 1.0, 0.74, 0.817, 0.494, 0.204, 0.12, 0.069, 0.058, 0.043, 0.055, 0.053, 0.037, 0.032, 0.026, 0.029, 0.038, 0.025, 0.018, 0.016, 0.017, 0.016, 0.013, 0.014, 0.016, 0.011, 0.011, 0.01, 0.008, 0.01, 0.008, 0.008, 0.007, 0.008, 0.005, 0.006, 0.005, 0.006, 0.004, 0.004, 0.003, 0.003, 0.003, 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.001, 0.001, 0.001, 0.005, 0.087, 0.179, 0.151, 0.046, 0.018, 0.074, 0.31, 0.978, 1.0, 0.516, 0.44, 0.506, 0.297, 0.089, 0.324, 0.653, 0.566, 0.445, 0.267, 0.984, 1.0, 1.0, 1.0, 1.0, 0.93, 0.801, 0.888, 1.0, 1.0, 0.963, 0.79, 0.471, 0.332, 0.29, 0.21, 0.808, 1.0, 1.0, 1.0, 0.547, 0.241, 0.108, 0.075, 0.053, 0.044, 0.073, 0.05, 0.022, 0.039, 0.042, 0.02, 0.021, 0.021, 0.015, 0.022, 0.02, 0.015, 0.018, 0.013, 0.008, 0.011, 0.011, 0.014, 0.014, 0.011, 0.009, 0.007, 0.006, 0.006, 0.008, 0.006, 0.005, 0.005, 0.004, 0.005, 0.004, 0.004, 0.003, 0.003, 0.003, 0.002, 0.002, 0.003, 0.002, 0.002, 0.002, 0.005, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.008, 0.008, 0.004, 0.009, 0.008, 0.001, 0.001, 0.001, 0.001, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.032, 0.239, 1.0, 1.0, 1.0, 1.0, 1.0, 0.606, 0.366, 0.159, 0.143, 0.262, 1.0, 1.0, 0.422, 0.219, 0.104, 0.081, 0.734, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.925, 0.807, 0.721, 0.544, 0.341, 0.235, 0.194, 0.069, 0.075, 0.06, 0.047, 0.04, 0.036, 0.065, 0.112, 0.285, 0.199, 0.059, 0.207, 0.749, 0.773, 0.915, 0.744, 0.745, 0.777, 0.928, 1.0, 1.0, 0.881, 0.942, 0.849, 0.876, 1.0, 0.872, 0.81, 1.0, 0.993, 0.69, 0.401, 0.271, 0.365, 0.55, 0.646, 0.712, 0.625, 0.523, 0.337, 0.213, 0.099, 0.09, 0.071, 0.047, 0.019, 0.024, 0.026, 0.032, 0.024, 0.016, 0.014, 0.021, 0.013, 0.019, 0.009, 0.011, 0.01, 0.009, 0.008, 0.007, 0.008, 0.009, 0.006, 0.005, 0.004, 0.005, 0.005, 0.004, 0.003, 0.004, 0.004, 0.004, 0.002, 0.002, 0.003, 0.003, 0.002, 0.002, 0.002, 0.001, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.007, 0.002, 0.002, 0.005, 0.054, 0.087, 0.063, 0.033, 0.062, 0.509, 0.765, 0.715, 0.593, 0.962, 1.0, 1.0, 1.0, 0.801, 0.283, 0.154, 0.066, 0.059, 0.539, 0.778, 0.91, 0.829, 0.975, 0.879, 0.644, 0.281, 0.207, 0.057, 0.092, 0.779, 0.955, 0.677, 0.503, 0.163, 0.094, 0.309, 1.0, 1.0, 1.0, 0.991, 0.468, 0.736, 0.825, 1.0, 0.803, 0.652, 0.669, 0.679, 0.318, 0.115, 0.059, 0.305, 0.738, 0.622, 0.761, 0.747, 0.75, 0.736, 0.741, 0.638, 0.769, 0.734, 0.875, 0.768, 0.781, 0.512, 0.161, 0.089, 0.053, 0.054, 0.454, 0.664, 0.659, 0.684, 0.602, 0.413, 0.116, 0.054, 0.027, 0.028, 0.068, 0.095, 0.067, 0.3, 0.512, 0.612, 0.695, 0.462, 0.157, 0.128, 0.083, 0.03, 0.076, 0.476, 0.614, 0.993, 0.781, 0.67, 0.66, 0.622, 0.435, 0.382, 0.283, 0.138, 0.163, 0.162, 0.05, 0.038, 0.034, 0.052, 0.073, 0.092, 0.058, 0.271, 0.5, 0.606, 0.555, 0.543, 0.559, 0.489, 0.362, 0.153, 0.095, 0.108, 0.39, 0.725, 0.796, 0.809, 0.989, 0.673, 0.786, 0.693, 0.587, 0.709, 0.723, 0.77, 0.646, 0.512, 0.491, 0.473, 0.36, 0.166, 0.068, 0.057, 0.093, 0.122, 0.223, 0.333, 0.318, 0.174, 0.072, 0.102, 0.239, 0.22, 0.177, 0.122, 0.056, 0.031, 0.02, 0.017, 0.014, 0.011, 0.011, 0.011, 0.012, 0.013, 0.009, 0.007, 0.008, 0.005, 0.005, 0.004, 0.004, 0.004, 0.005, 0.004, 0.004, 0.003, 0.002, 0.003, 0.003, 0.002, 0.003, 0.003, 0.001, 0.002, 0.002, 0.002, 0.001, 0.005, 0.005, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.002, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.048, 0.312, 0.981, 1.0, 1.0, 1.0, 1.0, 0.765, 1.0, 1.0, 1.0, 0.898, 0.537, 0.409, 0.247, 0.226, 0.246, 0.226, 0.225, 0.208, 0.141, 0.101, 0.089, 0.085, 0.042, 0.038, 0.029, 0.033, 0.06, 0.246, 0.748, 1.0, 1.0, 1.0, 1.0, 0.777, 0.613, 0.903, 1.0, 1.0, 0.841, 0.611, 0.998, 1.0, 1.0, 1.0, 1.0, 0.796, 0.249, 0.18, 0.158, 0.167, 0.133, 0.705, 0.83, 0.753, 0.731, 0.656, 0.613, 0.566, 0.494, 0.35, 0.301, 0.259, 0.177, 0.152, 0.125, 0.038, 0.038, 0.028, 0.063, 0.028, 0.057, 0.232, 0.666, 0.754, 0.822, 0.622, 0.233, 0.076, 0.052, 0.037, 0.233, 0.344, 0.323, 0.683, 0.648, 0.29, 0.271, 0.14, 0.106, 0.073, 0.096, 0.613, 0.728, 0.806, 0.845, 1.0, 0.955, 1.0, 0.986, 0.881, 1.0, 1.0, 0.973, 1.0, 0.772, 0.699, 0.562, 0.666, 0.763, 0.55, 0.369, 0.316, 0.248, 0.261, 0.623, 1.0, 0.873, 0.892, 0.666, 0.411, 0.299, 0.343, 0.689, 0.695, 0.457, 0.258, 0.189, 0.317, 0.523, 0.771, 1.0, 0.907, 0.77, 0.897, 0.46, 0.158, 0.083, 0.1, 0.129, 0.04, 0.181, 0.273, 0.522, 0.703, 0.716, 0.605, 0.176, 0.106, 0.05, 0.061, 0.456, 0.748, 0.774, 0.828, 0.836, 0.802, 0.725, 0.684, 0.516, 0.302, 0.157, 0.056, 0.027, 0.023, 0.02, 0.019, 0.013, 0.017, 0.02, 0.018, 0.017, 0.02, 0.017, 0.013, 0.015, 0.01, 0.009, 0.007, 0.008, 0.006, 0.004, 0.005, 0.005, 0.005, 0.004, 0.004, 0.003, 0.002, 0.003, 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.003, 0.003, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.017, 0.006, 0.004, 0.003, 0.003, 0.002, 0.001, 0.001, 0.001, 0.0, 0.0, 0.087, 0.401, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.851, 0.626, 0.193, 0.148, 0.147, 0.479, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.759, 0.573, 0.265, 0.201, 0.144, 0.09, 0.108, 0.126, 0.071, 0.086, 0.073, 0.058, 0.061, 0.047, 0.039, 0.035, 0.03, 0.021, 0.041, 0.019, 0.028, 0.018, 0.022, 0.1, 0.287, 1.0, 1.0, 0.948, 0.272, 0.176, 0.097, 0.601, 1.0, 0.936, 0.626, 0.215, 0.116, 0.062, 0.038, 0.281, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.473, 0.64, 0.363, 0.23, 0.201, 0.175, 0.163, 0.18, 0.958, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.997, 0.422, 0.197, 0.091, 0.325, 0.669, 0.703, 0.722, 1.0, 1.0, 1.0, 1.0, 0.769, 0.33, 0.337, 0.195, 0.121, 0.058, 0.053, 0.758, 0.802, 0.812, 0.89, 0.756, 0.691, 0.682, 0.652, 0.24, 0.168, 0.591, 0.666, 0.877, 0.911, 0.827, 0.718, 0.602, 0.355, 0.096, 0.084, 0.043, 0.059, 0.097, 0.233, 0.909, 0.893, 0.911, 0.622, 0.534, 0.577, 0.578, 0.486, 0.463, 0.411, 0.303, 0.219, 0.189, 0.044, 0.043, 0.049, 0.022, 0.032, 0.031, 0.017, 0.015, 0.052, 0.263, 0.574, 0.43, 0.141, 0.073, 0.088, 0.077, 0.096, 0.097, 0.099, 0.86, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.94, 0.508, 0.841, 0.855, 0.946, 1.0, 1.0, 1.0, 0.994, 0.763, 0.889, 0.787, 1.0, 0.893, 0.74, 0.459, 0.256, 0.19, 0.117, 0.061, 0.052, 0.082, 0.076, 0.205, 0.359, 0.262, 0.122, 0.097, 0.074, 0.026, 0.027, 0.026, 0.023, 0.017, 0.014, 0.018, 0.015, 0.015, 0.016, 0.033, 0.086, 0.188, 0.22, 0.812, 1.0, 0.926, 0.825, 0.732, 0.573, 0.47, 0.421, 0.215, 0.216, 0.456, 1.0, 0.927, 0.747, 0.651, 0.504, 0.279, 0.172, 0.134, 0.634, 0.855, 0.832, 0.773, 0.863, 0.793, 0.479, 0.379, 0.151, 0.089, 0.037, 0.065, 0.055, 0.083, 0.311, 0.757, 0.834, 0.703, 0.594, 0.59, 0.466, 0.166, 0.076, 0.03, 0.045, 0.216, 0.266, 0.171, 0.036, 0.092, 0.236, 0.519, 0.97, 0.969, 0.98, 0.751, 0.417, 0.196, 0.154, 0.077, 0.401, 0.477, 0.4, 0.214, 0.086, 0.059, 0.027, 0.025, 0.023, 0.022, 0.025, 0.018, 0.014, 0.027, 0.015, 0.014, 0.011, 0.011, 0.009, 0.01, 0.01, 0.008, 0.009, 0.009, 0.006, 0.005, 0.005, 0.005, 0.004, 0.004, 0.003, 0.003, 0.003, 0.003, 0.004, 0.019, 0.01, 0.003, 0.002, 0.002, 0.002, 0.004, 0.004, 0.007, 0.009, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.003, 0.001, 0.001, 0.001, 0.004, 0.002, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.004, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.002, 0.169, 0.747, 1.0, 1.0, 1.0, 0.455, 0.534, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.779, 0.371, 0.927, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.326, 0.262, 0.169, 0.103, 1.0, 1.0, 1.0, 0.495, 0.266, 0.128, 0.161, 1.0, 1.0, 1.0, 0.826, 0.344, 0.158, 0.077, 0.069, 0.057, 0.072, 0.086, 0.07, 0.064, 0.054, 0.033, 0.041, 0.033, 0.039, 0.031, 0.026, 0.015, 0.017, 0.023, 0.033, 0.023, 0.023, 0.026, 0.021, 0.019, 0.016, 0.011, 0.01, 0.011, 0.012, 0.012, 0.01, 0.01, 0.009, 0.009, 0.01, 0.018, 0.02, 0.024, 0.027, 0.031, 0.026, 0.028, 0.037, 0.036, 0.032, 0.022, 0.018, 0.012, 0.009, 0.007, 0.005, 0.003, 0.002, 0.006, 0.037, 0.062, 0.332, 0.843, 0.515, 0.279, 0.928, 1.0, 1.0, 1.0, 0.838, 0.314, 0.301, 1.0, 1.0, 1.0, 0.953, 1.0, 0.672, 0.298, 0.165, 0.264, 1.0, 1.0, 0.891, 1.0, 1.0, 1.0, 0.922, 0.511, 0.435, 0.509, 0.869, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.715, 0.448, 0.498, 0.725, 0.834, 0.787, 1.0, 1.0, 0.323, 0.677, 1.0, 1.0, 0.709, 0.275, 0.459, 1.0, 0.273, 0.171, 0.194, 0.524, 0.942, 0.856, 0.687, 0.82, 0.682, 0.366, 0.178, 0.475, 0.85, 0.818, 0.557, 0.543, 0.566, 0.5, 0.423, 0.308, 0.279, 0.292, 0.234, 0.205, 0.105, 0.037, 0.03, 0.021, 0.023, 0.023, 0.021, 0.017, 0.016, 0.014, 0.012, 0.013, 0.018, 0.011, 0.009, 0.008, 0.008, 0.01, 0.007, 0.006, 0.007, 0.006, 0.006, 0.005, 0.005, 0.004, 0.007, 0.004, 0.003, 0.003, 0.003, 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.003, 0.001, 0.001, 0.002, 0.001, 0.002, 0.004, 0.003, 0.004, 0.005, 0.005, 0.006, 0.005, 0.007, 0.004, 0.002, 0.001, 0.001, 0.001, 0.052, 0.158, 0.436, 0.559, 0.701, 0.738, 0.783, 0.816, 0.8, 0.849, 0.922, 0.768, 0.878, 0.974, 0.949, 0.955, 0.935, 0.914, 0.588, 0.274, 0.098, 0.107, 0.11, 0.692, 0.636, 0.352, 0.148, 0.142, 0.511, 0.53, 1.0, 1.0, 0.969, 0.508, 0.625, 0.844, 1.0, 1.0, 1.0, 1.0, 0.431, 0.172, 0.074, 0.247, 0.235, 0.121, 0.649, 0.966, 0.943, 0.993, 0.879, 0.825, 0.802, 0.751, 0.64, 0.359, 0.216, 0.069, 0.134, 0.085, 0.105, 0.203, 0.218, 0.154, 0.121, 0.13, 0.205, 0.702, 0.921, 0.621, 0.239, 0.118, 0.276, 0.507, 0.31, 0.099, 0.059, 0.244, 0.402, 0.485, 0.363, 0.175, 0.145, 0.086, 0.03, 0.027, 0.145, 0.24, 0.282, 0.275, 0.221, 0.079, 0.033, 0.024, 0.015, 0.017, 0.012, 0.009, 0.011, 0.011, 0.008, 0.007, 0.006, 0.006, 0.005, 0.005, 0.004, 0.005, 0.004, 0.004, 0.003, 0.004, 0.003, 0.003, 0.002, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.006, 0.005, 0.003, 0.001, 0.001, 0.0, 0.0, 0.001, 0.002, 0.004, 0.005, 0.006, 0.003, 0.004, 0.003, 0.005, 0.005, 0.003, 0.004, 0.001, 0.001, 0.005, 0.426, 1.0, 1.0, 0.798, 0.94, 1.0, 1.0, 1.0, 1.0, 0.424, 0.207, 0.25, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 0.295, 0.372, 0.285, 1.0, 1.0, 1.0, 1.0, 0.598, 0.465, 0.287, 0.928, 1.0, 0.451, 0.38, 0.708, 1.0, 0.841, 0.45, 0.202, 0.107, 0.139, 1.0, 1.0, 1.0, 1.0, 0.883, 0.326, 0.135, 0.077, 0.052, 0.045, 0.085, 0.272, 0.485, 0.664, 0.564, 0.186, 0.125, 0.17, 0.396, 0.624, 0.91, 0.761, 0.749, 0.436, 0.127, 0.075, 0.065, 0.073, 0.059, 0.033, 0.06, 0.05, 0.035, 0.024, 0.019, 0.022, 0.016, 0.016, 0.014, 0.012, 0.013, 0.012, 0.011, 0.008, 0.01, 0.007, 0.007, 0.008, 0.006, 0.005, 0.006, 0.005, 0.004, 0.005, 0.003, 0.003, 0.003, 0.003, 0.003, 0.003, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.001, 0.009, 0.155, 0.375, 0.254, 0.185, 0.166, 0.137, 0.051, 0.678, 1.0, 1.0, 1.0, 1.0, 1.0, 0.877, 0.599, 0.418, 0.375, 0.185, 0.125, 0.068, 0.055, 0.066, 0.044, 0.049, 0.043, 0.031, 0.041, 0.041, 0.029, 0.029, 0.027, 0.024, 0.021, 0.031, 0.03, 0.032, 0.017, 0.019, 0.017, 0.042, 0.028, 0.012, 0.01, 0.009, 0.01, 0.007, 0.006, 0.006, 0.006, 0.005, 0.005, 0.006, 0.005, 0.006, 0.004, 0.01, 0.037, 0.011, 0.007, 0.004, 0.005, 0.007, 0.016, 0.01, 0.007, 0.019, 0.012, 0.006, 0.008, 0.032, 0.008, 0.008, 0.007, 0.004, 0.003, 0.009, 0.003, 0.004, 0.019, 0.015, 0.005, 0.003, 0.003, 0.002, 0.001, 0.01, 0.018, 0.025, 0.039, 0.015, 0.009, 0.002, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.001, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0];
+    const TOTAL_DURATION = 63.56;
+
+    const audio = document.getElementById('master-audio');
+    const bgMusic = document.getElementById('bg-music');
+    bgMusic.volume = 0.30; // Strictly 30% volume as requested!
+
+    const launchOverlay = document.getElementById('launch-overlay');
+    const btnLaunchPlay = document.getElementById('btn-launch-play');
+    const finalPortal = document.getElementById('final-portal');
+    const progressLine = document.getElementById('progress-line');
+
+    // Try starting ambient background music at 30% as soon as page opens or on first pointer move
+    function tryPlayAmbientMusic() {
+      bgMusic.volume = 0.30;
+      if (bgMusic.paused) {
+        bgMusic.play().catch(() => {});
+      }
+    }
+    tryPlayAmbientMusic();
+    window.addEventListener('pointermove', tryPlayAmbientMusic, { once: true });
+    window.addEventListener('touchstart', tryPlayAmbientMusic, { once: true });
+
+    const canvas = document.getElementById('motion-canvas');
+    const ctx = canvas.getContext('2d');
+    let W = window.innerWidth, H = window.innerHeight;
+
+    function resize() {
+      W = window.innerWidth;
+      H = window.innerHeight;
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      canvas.width = W * dpr;
+      canvas.height = H * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+    const prog = (t, t0, t1) => clamp((t - t0) / Math.max(0.001, t1 - t0), 0, 1);
+    const easeOutExpo = (x) => x === 1 ? 1 : 1 - Math.pow(2, -10 * x);
+    const easeOutBack = (x) => {
+      const c1 = 1.70158, c3 = c1 + 1;
+      return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2);
+    };
+    const easeInOutCubic = (x) => x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2;
+
+    let smoothAmp = 0;
+    let dustParticles = [];
+    let dustSpawned = false;
+
+    function initDustParticles() {
+      dustParticles = [];
+      for (let i = 0; i < 480; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 15;
+        dustParticles.push({
+          x: W * 0.5 + (Math.random() - 0.5) * Math.min(W * 0.65, 580),
+          y: H * 0.5 + (Math.random() - 0.5) * 100,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          r: 1.5 + Math.random() * 3.8,
+          life: 1.0,
+          decay: 0.009 + Math.random() * 0.014,
+          hue: Math.random() > 0.3 ? 40 : 195
+        });
+      }
+    }
+
+    // ========================================================================
+    // 1. OUTER VIGNETTE VOICE REACTION (Siri / Apple Intelligence Edge Glow)
+    //    Center remains dark and clean so typography is 100% readable!
+    // ========================================================================
+    function drawOuterVoiceVignette(amp, t, alertRed = 0) {
+      ctx.save();
+      const edgeDepth = Math.min(W, H) * (0.18 + amp * 0.22 + alertRed * 0.25);
+
+      // Top, Bottom, Left, Right perimeter reactive vignette gradients
+      const cPrimary = alertRed > 0.05
+        ? `rgba(244, 63, 94, ${0.45 * alertRed + amp * 0.35})`
+        : `rgba(56, 189, 248, ${0.14 + amp * 0.42})`;
+      const cSecondary = alertRed > 0.05
+        ? `rgba(225, 29, 72, ${0.40 * alertRed + amp * 0.30})`
+        : `rgba(245, 158, 11, ${0.12 + amp * 0.38})`;
+
+      // Top vignette
+      const gTop = ctx.createLinearGradient(0, 0, 0, edgeDepth);
+      gTop.addColorStop(0, cPrimary);
+      gTop.addColorStop(1, 'rgba(3, 4, 8, 0)');
+      ctx.fillStyle = gTop;
+      ctx.fillRect(0, 0, W, edgeDepth);
+
+      // Bottom vignette
+      const gBot = ctx.createLinearGradient(0, H, 0, H - edgeDepth);
+      gBot.addColorStop(0, cSecondary);
+      gBot.addColorStop(1, 'rgba(3, 4, 8, 0)');
+      ctx.fillStyle = gBot;
+      ctx.fillRect(0, H - edgeDepth, W, edgeDepth);
+
+      // Left vignette
+      const gLeft = ctx.createLinearGradient(0, 0, edgeDepth, 0);
+      gLeft.addColorStop(0, cSecondary);
+      gLeft.addColorStop(1, 'rgba(3, 4, 8, 0)');
+      ctx.fillStyle = gLeft;
+      ctx.fillRect(0, 0, edgeDepth, H);
+
+      // Right vignette
+      const gRight = ctx.createLinearGradient(W, 0, W - edgeDepth, 0);
+      gRight.addColorStop(0, cPrimary);
+      gRight.addColorStop(1, 'rgba(3, 4, 8, 0)');
+      ctx.fillStyle = gRight;
+      ctx.fillRect(W - edgeDepth, 0, edgeDepth, H);
+
+      // Living Voice-Reactive Outer Perimeter Wave Frame (hugs the outer edges of the screen!)
+      const pad = 18 + amp * 16;
+      ctx.strokeStyle = alertRed > 0.05
+        ? `rgba(244, 63, 94, ${0.65 + amp * 0.3})`
+        : `rgba(255, 255, 255, ${0.16 + amp * 0.45})`;
+      ctx.lineWidth = 2 + amp * 3;
+      ctx.shadowColor = alertRed > 0.05 ? '#f43f5e' : '#38bdf8';
+      ctx.shadowBlur = 16 + amp * 28;
+
+      // Top & Bottom living border waves
+      for (const isBottom of [false, true]) {
+        const baseY = isBottom ? H - pad : pad;
+        const dir = isBottom ? -1 : 1;
+        ctx.beginPath();
+        const steps = 64;
+        for (let i = 0; i <= steps; i++) {
+          const u = i / steps;
+          const x = pad + u * (W - pad * 2);
+          const bell = Math.sin(Math.PI * u);
+          const wave = Math.sin(u * 14 - t * 11 + (isBottom ? 2 : 0)) * (3 + amp * 26) * bell;
+          const y = baseY + dir * Math.abs(wave);
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    // Helper: Precision Outer Ring / Gear (placed around cards or in background corners, never muddying text)
+    function drawGearWheel(cx, cy, radius, teeth, angle, color, alpha, lineWidth = 2) {
+      if (alpha <= 0.01 || radius <= 2) return;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(angle);
+      ctx.globalAlpha = clamp(alpha, 0, 1);
+      ctx.strokeStyle = color;
+      ctx.lineWidth = lineWidth;
+
+      ctx.beginPath();
+      for (let i = 0; i < teeth; i++) {
+        const a0 = (i / teeth) * Math.PI * 2;
+        const a1 = ((i + 0.42) / teeth) * Math.PI * 2;
+        ctx.arc(0, 0, radius, a0, a1);
+      }
+      ctx.stroke();
+
+      ctx.beginPath();
+      for (let i = 0; i < teeth * 2; i++) {
+        const a = (i / (teeth * 2)) * Math.PI * 2;
+        const rIn = radius * 0.88;
+        const rOut = radius * (i % 2 === 0 ? 0.95 : 0.91);
+        ctx.moveTo(Math.cos(a) * rIn, Math.sin(a) * rIn);
+        ctx.lineTo(Math.cos(a) * rOut, Math.sin(a) * rOut);
+      }
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Helper: Apple High-Contrast Frosted Glass Card (Dark translucent body so white text is 100% legible)
+    function drawAppleCard(cx, cy, w, h, radius, title, subtitle, scale, alpha, accentColor = 'rgba(255,255,255,0.32)', badgeText = '') {
+      if (alpha <= 0.01 || scale <= 0.02) return;
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(scale, scale);
+      ctx.globalAlpha = clamp(alpha, 0, 1);
+
+      // Deep shadow for separation
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+      ctx.shadowBlur = 45;
+      ctx.shadowOffsetY = 18;
+
+      // Dark Apple frosted glass fill (high contrast for white text!)
+      const grad = ctx.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
+      grad.addColorStop(0, 'rgba(24, 28, 42, 0.92)');
+      grad.addColorStop(0.5, 'rgba(12, 15, 24, 0.95)');
+      grad.addColorStop(1, 'rgba(20, 24, 38, 0.92)');
+      ctx.fillStyle = grad;
+
+      ctx.beginPath();
+      ctx.roundRect(-w / 2, -h / 2, w, h, radius);
+      ctx.fill();
+
+      // Clean specular border
+      ctx.shadowBlur = 18;
+      ctx.shadowOffsetY = 0;
+      ctx.shadowColor = accentColor;
+      ctx.strokeStyle = accentColor;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+
+      // Top inner Apple glass rim highlight
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.38)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-w * 0.36, -h / 2 + 1);
+      ctx.lineTo(w * 0.36, -h / 2 + 1);
+      ctx.stroke();
+
+      // Optional top eyebrow / badge
+      if (badgeText) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = `600 11px -apple-system, 'Inter', sans-serif`;
+        ctx.fillText(badgeText.toUpperCase(), 0, -h * 0.30, w * 0.86);
+      }
+
+      // Crisp White Apple Title
+      ctx.fillStyle = '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const titleSize = Math.min(w * 0.115, subtitle ? h * 0.31 : h * 0.42);
+      ctx.font = `700 ${Math.max(15, Math.floor(titleSize))}px -apple-system, 'SF Pro Display', 'Inter', sans-serif`;
+      const titleY = badgeText ? (subtitle ? -h * 0.03 : h * 0.06) : (subtitle ? -h * 0.11 : 0);
+      ctx.fillText(title, 0, titleY, w * 0.88);
+
+      if (subtitle) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.68)';
+        const subSize = Math.max(12, Math.floor(titleSize * 0.50));
+        ctx.font = `500 ${subSize}px -apple-system, 'Inter', sans-serif`;
+        ctx.fillText(subtitle, 0, badgeText ? h * 0.25 : h * 0.22, w * 0.88);
+      }
+
+      ctx.restore();
+    }
+
+    // Helper: Living Connecting Spline Line
+    function drawLivingSpline(x0, y0, x1, y1, progress, amp, t, color = '#38bdf8', width = 2.5) {
+      if (progress <= 0.01) return;
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 14 + amp * 20;
+      ctx.lineCap = 'round';
+
+      const segs = 32;
+      const maxSeg = Math.floor(segs * clamp(progress, 0, 1));
+      ctx.beginPath();
+      for (let i = 0; i <= maxSeg; i++) {
+        const u = i / segs;
+        const px = x0 + (x1 - x0) * u;
+        const py = y0 + (y1 - y0) * u;
+        const envBell = Math.sin(Math.PI * u);
+        const wave = Math.sin(u * 10 - t * 12) * (4 + amp * 22) * envBell;
+        const dx = x1 - x0, dy = y1 - y0;
+        const len = Math.hypot(dx, dy) + 1e-5;
+        const nx = -dy / len, ny = dx / len;
+        const fx = px + nx * wave;
+        const fy = py + ny * wave;
+        if (i === 0) ctx.moveTo(fx, fy);
+        else ctx.lineTo(fx, fy);
+      }
+      ctx.stroke();
+
+      const uHead = clamp(progress, 0, 1);
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(x0 + (x1 - x0) * uHead, y0 + (y1 - y0) * uHead, width * 1.4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function renderCinema() {
+      const t = audio.currentTime || 0;
+      progressLine.style.width = Math.min(100, (t / TOTAL_DURATION) * 100) + '%';
+
+      const envIdx = Math.min(VOICE_ENV.length - 1, Math.max(0, Math.floor(t * 40)));
+      const rawAmp = (!audio.paused && t < TOTAL_DURATION) ? (VOICE_ENV[envIdx] || 0) : 0;
+      smoothAmp += (rawAmp - smoothAmp) * 0.28;
+      const amp = smoothAmp;
+
+      if (t >= 60.40) {
+        finalPortal.classList.add('active');
+      } else {
+        finalPortal.classList.remove('active');
+      }
+
+      // Clear deep dark Apple background
+      ctx.fillStyle = '#030408';
+      ctx.fillRect(0, 0, W, H);
+
+      const minDim = Math.min(W, H);
+      const cx = W * 0.5;
+      const cy = H * 0.5;
+
+      // Is NDA System Error active? (45.98s - 47.05s)
+      const isNdaError = (t >= 45.98 && t < 47.05) ? 1.0 : 0.0;
+
+      // Draw Outer Vignette Voice Reaction (hugs the edges of the screen, keeping center crisp!)
+      drawOuterVoiceVignette(amp, t, isNdaError);
+
+      // Subtle outer precision ring near the perimeter (outside the text zone!)
+      drawGearWheel(cx, cy, minDim * (0.45 + amp * 0.02), 40, t * 0.08, 'rgba(255, 255, 255, 0.10)', 0.6, 1.2);
+
+      // ======================================================================
+      // SCENE CHOREOGRAPHY
+      // ======================================================================
+
+      // ----------------------------------------------------------------------
+      // ACT 0 (0.00s - 4.25s): Document folds -> Line unfolds "Богдан Богданов"
+      // ----------------------------------------------------------------------
+      if (t < 4.25) {
+        if (t < 2.05) {
+          const pIn = easeOutBack(prog(t, 0.10, 0.75));
+          const pFold = easeInOutCubic(prog(t, 1.25, 2.02));
+          const docW = Math.min(320, W * 0.70) * (1 - pFold * 0.90);
+          const docH = Math.min(400, H * 0.58) * (1 - pFold * 0.90);
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.scale(pIn, pIn);
+          ctx.rotate(pFold * Math.PI * 2);
+
+          ctx.fillStyle = `rgba(245, 245, 247, ${1 - pFold * 0.4})`;
+          ctx.shadowColor = 'rgba(56, 189, 248, 0.5)';
+          ctx.shadowBlur = 30;
+          ctx.beginPath();
+          ctx.roundRect(-docW / 2, -docH / 2, docW, docH, 18 + pFold * 80);
+          ctx.fill();
+
+          if (pFold < 0.6) {
+            ctx.fillStyle = '#1d1d1f';
+            ctx.textAlign = 'center';
+            ctx.font = `700 ${Math.floor(docW * 0.085)}px -apple-system, 'Inter', sans-serif`;
+            ctx.fillText('Резюме_Богданов.docx', 0, -docH * 0.25);
+            ctx.fillStyle = '#86868b';
+            for (let l = 0; l < 5; l++) {
+              ctx.fillRect(-docW * 0.34, -docH * 0.08 + l * (docH * 0.09), docW * (l === 4 ? 0.45 : 0.68), 5);
+            }
+          }
+          ctx.restore();
+        } else {
+          const pLine = easeOutExpo(prog(t, 2.05, 2.68));
+          const pUnfold = easeOutBack(prog(t, 2.65, 3.40));
+          const pExit = prog(t, 3.90, 4.25);
+          const alpha = 1 - pExit;
+
+          const lineSpan = Math.min(W * 0.78, 700) * pLine;
+          drawLivingSpline(cx - lineSpan / 2, cy, cx + lineSpan / 2, cy, 1.0, 0.2, t, '#38bdf8', 2.5);
+          drawGearWheel(cx, cy, minDim * 0.33 * pUnfold, 24, -t * 1.1, 'rgba(245, 158, 11, 0.45)', alpha, 2);
+
+          if (pUnfold > 0.02) {
+            drawAppleCard(
+              cx, cy,
+              Math.min(W * 0.86, 620), 165, 34,
+              'Богдан Богданов',
+              'Интерактивное моушн-резюме',
+              pUnfold, alpha, 'rgba(255, 255, 255, 0.35)', 'Event Manager'
+            );
+          }
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 1 (4.25s - 7.55s): "Добрый день" -> Line unfolds "Ольга Бортникова"
+      // ----------------------------------------------------------------------
+      else if (t < 7.55) {
+        const pHelloIn = easeOutBack(prog(t, 4.25, 4.65));
+        const pShoot = easeInOutCubic(prog(t, 5.05, 5.50));
+        const pOlga = easeOutBack(prog(t, 5.30, 5.95));
+        const pExit = prog(t, 7.20, 7.55);
+        const alpha = 1 - pExit;
+
+        if (t < 5.35) {
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.75, 460), 125, 30,
+            'Добрый день.', '',
+            pHelloIn * (1 - pShoot * 0.7), 1 - pShoot, 'rgba(56, 189, 248, 0.45)'
+          );
+        }
+
+        if (t >= 5.05) {
+          const span = Math.min(W * 0.82, 720);
+          drawLivingSpline(cx - span / 2, cy, cx + span / 2, cy, pShoot, amp, t, '#f59e0b', 2.5);
+          drawGearWheel(cx, cy, minDim * 0.35 * pOlga, 28, t * 0.8, 'rgba(56, 189, 248, 0.4)', alpha, 2);
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 660), 175, 36,
+            'Ольга Бортникова',
+            'lifeevents_agency',
+            pOlga, alpha, 'rgba(245, 158, 11, 0.55)', 'Персонально для руководителя'
+          );
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 2 (7.55s - 18.25s): 4 Qualities -> "Вы его нашли" -> 15 Years Wheel
+      // ----------------------------------------------------------------------
+      else if (t < 18.25) {
+        if (t < 15.50) {
+          const pMerge = easeInOutCubic(prog(t, 13.80, 14.60));
+          const pFound = easeOutBack(prog(t, 14.50, 15.05));
+          const spreadX = Math.min(W * 0.25, 220) * (1 - pMerge);
+          const spreadY = Math.min(H * 0.16, 105) * (1 - pMerge);
+
+          const traits = [
+            { label: 'Талантливого',   sub: 'Креатив и вкус',   tShow: 7.95,  ox: -spreadX, oy: -spreadY, col: 'rgba(245, 158, 11, 0.55)' },
+            { label: 'Молодого',       sub: 'Драйв и скорость', tShow: 8.60,  ox:  spreadX, oy: -spreadY, col: 'rgba(56, 189, 248, 0.55)' },
+            { label: 'Харизматичного', sub: 'Энергия лидера',   tShow: 9.60,  ox: -spreadX, oy:  spreadY, col: 'rgba(168, 85, 247, 0.55)' },
+            { label: 'И красивого',    sub: 'Лицо проекта',     tShow: 11.15, ox:  spreadX, oy:  spreadY, col: 'rgba(16, 185, 129, 0.55)' }
+          ];
+
+          const cardW = Math.min(W * 0.43, 310);
+          const cardH = 104;
+
+          traits.forEach((tr) => {
+            if (t >= tr.tShow) {
+              const pPop = easeOutBack(prog(t, tr.tShow, tr.tShow + 0.45));
+              const nx = cx + tr.ox * pPop;
+              const ny = cy + tr.oy * pPop;
+              drawLivingSpline(cx, cy, nx, ny, pPop * (1 - pMerge), amp, t, tr.col, 2);
+              drawAppleCard(nx, ny, cardW, cardH, 26, tr.label, tr.sub, pPop * (1 - pMerge * 0.8), 1 - pMerge, tr.col);
+            }
+          });
+
+          if (t >= 14.50) {
+            drawAppleCard(
+              cx, cy,
+              Math.min(W * 0.86, 580), 155, 34,
+              'Вы его нашли.',
+              '100% совпадение с задачами агентства',
+              pFound, 1 - prog(t, 15.20, 15.50),
+              'rgba(16, 185, 129, 0.65)', 'Event Manager'
+            );
+          }
+        } else {
+          // 15.50 - 18.25s: 15 Years Chronograph Wheel outside the card
+          const pIn = easeOutBack(prog(t, 15.50, 16.05));
+          const pCount = easeOutExpo(prog(t, 15.65, 17.30));
+          const pExit = prog(t, 17.90, 18.25);
+          const alpha = 1 - pExit;
+          const yrs = Math.max(1, Math.round(pCount * 15));
+
+          const wheelAngle = pCount * Math.PI * 3.5 + t * 0.4;
+          drawGearWheel(cx, cy, minDim * 0.37 * pIn, 32, wheelAngle, 'rgba(245, 158, 11, 0.65)', alpha, 3);
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.84, 540), 175, 36,
+            `${yrs} лет в индустрии`,
+            'Богдан Богданов · Сотни проведённых событий',
+            pIn, alpha, 'rgba(245, 158, 11, 0.6)', 'Опыт и масштаб'
+          );
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 3 (18.25s - 28.40s): "Управление людьми" -> 5 Nodes ("Всё вот это")
+      // ----------------------------------------------------------------------
+      else if (t < 28.40) {
+        const pCore = easeOutBack(prog(t, 18.25, 18.80));
+        const pExit = prog(t, 28.05, 28.40);
+        const alpha = 1 - pExit;
+
+        const hubY = t >= 25.40 ? cy - minDim * 0.21 : cy;
+        const hubTitle = t < 21.35 ? 'Управление людьми' : 'Понимаю всё изнутри';
+        const hubSub = t < 21.35 ? 'Моя главная стихия' : 'Чтобы никто из подрядчиков не схалтурил';
+
+        drawAppleCard(
+          cx, hubY,
+          Math.min(W * 0.86, 580), 132, 32,
+          hubTitle, hubSub,
+          pCore, alpha, 'rgba(56, 189, 248, 0.5)', 'Контроль качества'
+        );
+
+        if (t >= 25.45) {
+          const skills = [
+            { name: 'Видео',      sub: 'Монтаж и ритм', t0: 25.55, col: 'rgba(245, 158, 11, 0.55)' },
+            { name: 'Фото',       sub: 'Свет и ракурс', t0: 25.95, col: 'rgba(56, 189, 248, 0.55)' },
+            { name: 'Звук и свет',sub: 'Техрайдер',     t0: 26.35, col: 'rgba(168, 85, 247, 0.55)' },
+            { name: 'Своя база',  sub: 'DJ и артисты',  t0: 26.75, col: 'rgba(16, 185, 129, 0.55)' },
+            { name: 'Нейросети',  sub: 'AI и код',      t0: 27.15, col: 'rgba(244, 63, 94, 0.55)' }
+          ];
+          const spanX = Math.min(W * 0.90, 960);
+          const pillW = Math.min(W * 0.28, 176);
+          const pillH = 92;
+
+          skills.forEach((sk, i) => {
+            if (t >= sk.t0) {
+              const pNode = easeOutBack(prog(t, sk.t0, sk.t0 + 0.42));
+              const u = (i / 4) - 0.5;
+              const nx = cx + u * spanX * 0.84;
+              const ny = cy + minDim * (i % 2 === 0 ? 0.13 : 0.25);
+
+              drawLivingSpline(cx, hubY + 55, nx, ny, pNode, amp, t, sk.col, 2.2);
+              drawAppleCard(nx, ny, pillW, pillH, 24, sk.name, sk.sub, pNode, alpha, sk.col);
+            }
+          });
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 4 (28.40s - 34.55s): "Сценарии" -> "Пыль в глаза" Vortex Shatter
+      // ----------------------------------------------------------------------
+      else if (t < 34.55) {
+        if (t < 32.50) {
+          dustSpawned = false;
+          const pWave = easeOutExpo(prog(t, 28.40, 29.80));
+          drawLivingSpline(W * 0.08, cy, W * 0.92, cy, pWave, amp + 0.2, t, '#f59e0b', 3.5);
+
+          const label = t < 30.80 ? 'Обожаю сценарии' : 'Без сценария любой бюджет —';
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 660), 145, 34,
+            label, 'Драматургия и режиссура события',
+            easeOutBack(prog(t, 28.45, 29.00)), 1.0, 'rgba(245, 158, 11, 0.55)', 'Фундамент'
+          );
+        } else if (t < 33.28) {
+          const pSlam = easeOutBack(prog(t, 32.50, 32.78));
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 680), 175, 38,
+            'Пыль в глаза.',
+            'Красивая картинка рассыпается без сюжета',
+            pSlam, 1.0, 'rgba(245, 158, 11, 0.8)', 'Без драматургии'
+          );
+        } else {
+          if (!dustSpawned) {
+            initDustParticles();
+            dustSpawned = true;
+          }
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 5 (34.55s - 47.05s): Quest -> "$10,000" -> NDA RED DOT SYSTEM ERROR!
+      // ----------------------------------------------------------------------
+      else if (t < 47.05) {
+        if (t < 42.15) {
+          const pIn = easeOutBack(prog(t, 34.55, 35.15));
+          drawGearWheel(cx, cy, minDim * 0.37 * pIn, 28, t * 0.6, 'rgba(56, 189, 248, 0.45)', 0.8, 2.5);
+
+          let mainTxt = 'Иммерсивный квест';
+          let subTxt = 'Сценарий полного погружения с нуля';
+          if (t >= 40.00) {
+            mainTxt = 'За 1 день клиент потратил...';
+            subTxt = 'Организация и продакшн под ключ';
+          } else if (t >= 38.40) {
+            mainTxt = 'Как фильм в реальности';
+            subTxt = 'Нанятые профессиональные актёры';
+          }
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 660), 165, 34,
+            mainTxt, subTxt,
+            pIn, 1.0, 'rgba(56, 189, 248, 0.55)', 'Любимый кейс'
+          );
+        } else if (t < 45.98) {
+          const pSpin = easeOutExpo(prog(t, 42.15, 43.45));
+          const val = Math.round(pSpin * 10000);
+          drawGearWheel(cx, cy, minDim * 0.38, 36, pSpin * Math.PI * 4, 'rgba(16, 185, 129, 0.55)', 0.85, 3);
+
+          const subLabel = t < 44.35
+            ? 'Бюджет за один день · Полное погружение'
+            : 'Рассказал бы в деталях, но тут...';
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.86, 600), 175, 38,
+            '$' + val.toLocaleString('en-US'),
+            subLabel,
+            1.0, 1.0, 'rgba(16, 185, 129, 0.65)', 'Бюджет проекта'
+          );
+        } else {
+          // >>> 45.98s - 47.05s: NDA SYSTEM ERROR + FULLSCREEN RED DOT EXPANSION ("ТУ-ДУ, БИ-БИП") <<<
+          const pErr = prog(t, 45.98, 47.05);
+          const pSlam = easeOutBack(prog(t, 45.98, 46.28));
+          const pExit = prog(t, 46.82, 47.05);
+          const alpha = 1 - pExit;
+
+          // Giant expanding Red Dot across the entire screen!
+          const dotRadius = Math.max(W, H) * easeOutExpo(prog(t, 45.98, 46.45)) * 0.85;
+          const redGrad = ctx.createRadialGradient(cx, cy, 10, cx, cy, Math.max(20, dotRadius));
+          redGrad.addColorStop(0, `rgba(244, 63, 94, ${0.42 * alpha})`);
+          redGrad.addColorStop(0.55, `rgba(225, 29, 72, ${0.22 * alpha})`);
+          redGrad.addColorStop(1, 'rgba(3, 4, 8, 0)');
+          ctx.fillStyle = redGrad;
+          ctx.fillRect(0, 0, W, H);
+
+          // Pulsing Red Recording/Alert Beacon Dot at top of card
+          const blink = Math.sin((t - 45.98) * 28) > 0 ? 1.0 : 0.35;
+          ctx.save();
+          ctx.fillStyle = `rgba(244, 63, 94, ${blink * alpha})`;
+          ctx.shadowColor = '#f43f5e';
+          ctx.shadowBlur = 35;
+          ctx.beginPath();
+          ctx.arc(cx, cy - 125, 16 * pSlam, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.86, 620), 175, 36,
+            '⛔ NDA · ДОСТУП ЗАКРЫТ',
+            'Подписан контракт о неразглашении с заказчиком',
+            pSlam, alpha, 'rgba(244, 63, 94, 0.85)', 'SYSTEM ERROR // СЕКРЕТНО'
+          );
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 6 (47.05s - 55.05s):
+      // MEME MOMENT: "Вот этой компанией..." -> [ ? ] -> "Но хочу выйти в этот масштаб" -> LIFEEVENTS_AGENCY
+      // ----------------------------------------------------------------------
+      else if (t < 55.05) {
+        const pExit = prog(t, 54.75, 55.05);
+        const alpha = 1 - pExit;
+
+        if (t < 53.30) {
+          // 47.05 - 53.30s: Mystery Company Card with Meme Question Marks "[ ? ]"
+          const pIn = easeOutBack(prog(t, 47.10, 47.65));
+          const pQuestionPop = easeOutBack(prog(t, 49.12, 49.55));
+          const wobble = t >= 49.12 ? Math.sin((t - 49.12) * 14) * Math.exp(-(t - 49.12) * 1.8) * 0.08 : 0;
+
+          ctx.save();
+          ctx.translate(cx, cy);
+          ctx.rotate(wobble);
+          ctx.translate(-cx, -cy);
+
+          const cardTitle = t < 49.10 ? 'Руководящая должность' : 'Компания « ? ? ? »';
+          const cardSub = t < 49.10
+            ? 'Сейчас я руковожу вот этой компанией...'
+            : 'Имя скрыто, чтобы никто не чувствовал конкуренцию 😉';
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 650), 175, 36,
+            cardTitle, cardSub,
+            pIn, alpha, 'rgba(245, 158, 11, 0.65)', 'Инкогнито · Действующий бизнес'
+          );
+          ctx.restore();
+
+          // Floating Meme Question Marks ("? ? ?") popping around the card at 49.15s!
+          if (t >= 49.12) {
+            const qPositions = [
+              { x: cx - Math.min(W * 0.34, 290), y: cy - 75, rot: -0.25, s: 1.1 },
+              { x: cx + Math.min(W * 0.34, 290), y: cy - 65, rot:  0.28, s: 1.2 },
+              { x: cx - Math.min(W * 0.30, 250), y: cy + 85, rot: -0.18, s: 0.95 },
+              { x: cx + Math.min(W * 0.30, 250), y: cy + 80, rot:  0.22, s: 1.05 }
+            ];
+            qPositions.forEach((qp, qi) => {
+              const pq = easeOutBack(prog(t, 49.12 + qi * 0.10, 49.50 + qi * 0.10));
+              if (pq > 0.01) {
+                ctx.save();
+                ctx.translate(qp.x, qp.y + Math.sin(t * 5 + qi) * 8);
+                ctx.rotate(qp.rot + Math.sin(t * 4 + qi) * 0.08);
+                ctx.scale(pq * qp.s, pq * qp.s);
+                ctx.fillStyle = '#f59e0b';
+                ctx.shadowColor = '#f59e0b';
+                ctx.shadowBlur = 25;
+                ctx.font = `900 44px -apple-system, 'Inter', sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText('?', 0, 0);
+                ctx.restore();
+              }
+            });
+          }
+        } else {
+          // 53.30 - 55.05s: "В этот масштаб!" -> Full Designation LIFEEVENTS_AGENCY
+          const pNodeB = easeOutBack(prog(t, 53.30, 53.85));
+          drawGearWheel(cx, cy, minDim * 0.38 * pNodeB, 32, t * 1.4, 'rgba(56, 189, 248, 0.55)', alpha, 3);
+
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.88, 680), 180, 38,
+            'lifeevents_agency',
+            'Ольга Бортникова · Масштабные проекты мирового уровня',
+            pNodeB, alpha, 'rgba(56, 189, 248, 0.75)', '🎯 ВОТ ЭТОТ МАСШТАБ'
+          );
+        }
+      }
+
+      // ----------------------------------------------------------------------
+      // ACT 7 (55.05s - 60.40s): "Быстро учусь" -> "До связи."
+      // ----------------------------------------------------------------------
+      else if (t < 60.40) {
+        if (t < 57.95) {
+          const pIn = easeOutBack(prog(t, 55.05, 55.55));
+          const pOut = prog(t, 57.60, 57.95);
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.86, 620), 160, 34,
+            'Быстро учусь',
+            'Открыт новому и готов включаться на 100%',
+            pIn, 1 - pOut, 'rgba(16, 185, 129, 0.6)', 'Готовность к работе'
+          );
+        } else {
+          const pIn = easeOutBack(prog(t, 57.95, 58.35));
+          const pFold = easeInOutCubic(prog(t, 59.95, 60.38));
+          const alpha = 1 - pFold;
+
+          drawGearWheel(cx, cy, minDim * 0.33 * pIn, 24, t * 1.1, 'rgba(245, 158, 11, 0.5)', alpha, 2.5);
+          drawAppleCard(
+            cx, cy,
+            Math.min(W * 0.80, 500), 150, 36,
+            'До связи.',
+            '',
+            pIn, alpha, 'rgba(245, 158, 11, 0.65)'
+          );
+        }
+      }
+
+      // Update Dust Particles
+      for (let i = dustParticles.length - 1; i >= 0; i--) {
+        const p = dustParticles[i];
+        const dx = p.x - cx, dy = p.y - cy;
+        const dist = Math.hypot(dx, dy) + 1;
+        p.vx += (-dy / dist) * 0.32 + (dx / dist) * 0.12;
+        p.vy += (dx / dist) * 0.32 + (dy / dist) * 0.12;
+        p.x += p.vx;
+        p.y += p.vy;
+        p.life -= p.decay;
+        if (p.life <= 0) {
+          dustParticles.splice(i, 1);
+          continue;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `hsla(${p.hue}, 95%, 65%, ${p.life})`;
+        ctx.fill();
+      }
+
+      requestAnimationFrame(renderCinema);
+    }
+
+    function launchShow() {
+      if (launchOverlay.style.display === 'none') return;
+      launchOverlay.style.opacity = '0';
+      launchOverlay.style.filter = 'blur(24px)';
+      setTimeout(() => { launchOverlay.style.display = 'none'; }, 650);
+      dustSpawned = false;
+      bgMusic.volume = 0.30;
+      bgMusic.currentTime = 24.5; // Jump right into the warm beat drop of Stage Spotlight!
+      bgMusic.play().catch(() => {});
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    }
+
+    btnLaunchPlay.addEventListener('click', (e) => {
+      e.stopPropagation();
+      launchShow();
+    });
+    launchOverlay.addEventListener('click', launchShow);
+
+    // Click anywhere on canvas during playback to pause/resume both tracks synchronously
+    document.body.addEventListener('click', (e) => {
+      if (launchOverlay.style.display !== 'none') return;
+      if (e.target.closest('button') || e.target.closest('a')) return;
+      if (audio.paused) {
+        if (audio.currentTime >= TOTAL_DURATION - 0.2) {
+          dustSpawned = false;
+          audio.currentTime = 0;
+        }
+        bgMusic.volume = 0.30;
+        bgMusic.play().catch(() => {});
+        audio.play().catch(() => {});
+      } else {
+        audio.pause();
+        bgMusic.pause();
+      }
+    });
+
+    audio.addEventListener('ended', () => {
+      // Keep bgMusic softly playing at 18% on the final contact portal
+      bgMusic.volume = 0.18;
+    });
+
+    document.getElementById('btn-replay-end').addEventListener('click', () => {
+      dustSpawned = false;
+      finalPortal.classList.remove('active');
+      bgMusic.volume = 0.30;
+      bgMusic.currentTime = 24.5;
+      bgMusic.play().catch(() => {});
+      audio.currentTime = 0;
+      audio.play().catch(() => {});
+    });
+
+    document.getElementById('btn-copy-tg').addEventListener('click', () => {
+      const tg = '@bogdan_act';
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(tg).catch(() => {});
+      } else {
+        const ta = document.createElement('textarea');
+        ta.value = tg;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      const toast = document.getElementById('toast-msg');
+      toast.style.opacity = '1';
+      setTimeout(() => { toast.style.opacity = '0'; }, 2200);
+    });
+
+    requestAnimationFrame(renderCinema);
+  </script>
+</body>
+</html>
